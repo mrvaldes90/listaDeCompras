@@ -23,11 +23,17 @@ public class ToDo extends Model {
     // This is a regular field
     @Column(name = "Status")
     public boolean status;
+    // This is a regular field
+    @Column(name = "Position")
+    public long position;
 
+    public boolean listoGuardar;
     // Make sure to have a default constructor for every ActiveAndroid model
     public ToDo(){
         super();
-        status = true;
+        this.status = true;
+        this.listoGuardar = true;
+        //this.position = ToDo.count();
     }
 
     // Used to return items from another table based on the foreign key
@@ -40,10 +46,27 @@ public class ToDo extends Model {
         String tableName = Cache.getTableInfo(ToDo.class).getTableName();
         // Query all items without any conditions
         String resultRecords = new Select(tableName + ".*, " + tableName + ".Id as _id").
-                from(ToDo.class).toSql();
+                from(ToDo.class)
+                .where("Status=1")
+                .orderBy("Position ASC").toSql();
         // Execute query on the underlying ActiveAndroid SQLite database
         Cursor resultCursor = Cache.openDatabase().rawQuery(resultRecords, null);
         return resultCursor;
+    }
+
+    public static List<ToDo> getAll() {
+        return new Select()
+                .from(ToDo.class)
+                .where("status=1")
+                .orderBy("Name ASC")
+                .execute();
+    }
+
+    public static long count(){
+        return new Select()
+                .from(ToDo.class)
+                .where("status=1")
+                .execute().size();
     }
 
 }

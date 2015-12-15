@@ -1,52 +1,229 @@
 package soft.mvaldes.listadecompras;
 
+import android.app.ActionBar;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import com.terlici.dragndroplist.*;
+import android.widget.AdapterView;
+import android.widget.EditText;
+import android.widget.Toast;
+
+
+import com.mobeta.android.dslv.DragSortController;
+import com.mobeta.android.dslv.DragSortListView;
+import com.mobeta.android.dslv.SimpleDragSortCursorAdapter;
 
 import soft.mvaldes.datos.ToDo;
 
 public class MainActivity extends AppCompatActivity {
-
+    DragSortListView listView;
+    SimpleDragSortCursorAdapter adapter;
+    ToDo listaNueva; //lista a crear...
+    ToDo listaABorrar; //lista a borrar...
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        //toolbar.
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                inputToDo(null, view);
             }
         });
 
-        DragNDropListView list = (DragNDropListView)findViewById(android.R.id.list);
-        // Get data cursor
-
+        listView = (DragSortListView) findViewById(R.id.listview);
         Cursor todoCursor = ToDo.fetchResultCursor();
-        if (todoCursor.getCount() > 0) {
-            DragNDropCursorAdapter adapter = new DragNDropCursorAdapter(this,
-                    R.layout.mainlist_item_row,
-                    todoCursor,
-                    new String[]{"Name"},
-                    new int[]{R.id.mainListName},
-                    R.id.mainListName);
+        adapter = new SimpleDragSortCursorAdapter(this,
+                R.layout.mainlist_item_row,
+                todoCursor,
+                new String[]{"Name"},
+                new int[]{R.id.mainListName},
+                R.id.mainListName);
 
-            list.setDragNDropAdapter(adapter);
-        }
+        listView.setAdapter(adapter);
+        //listView.setDropListener(onDrop);
+        //listView.setRemoveListener(onRemove);
+        listView.setRemoveListener(new DragSortListView.RemoveListener() {
+            @Override
+            public void remove(int which) {
+                borrarLista(which);
+            }
+        });
+        DragSortController controller = new DragSortController(listView);
+        controller.setDragHandleId(R.id.mainListHandler);
+        //controller.setClickRemoveId(R.id.);
+        controller.setRemoveEnabled(true);
+        controller.setSortEnabled(true);
+        listView.setLongClickable(true);
+        controller.setDragInitMode(1);
+        //controller.setRemoveMode(removeMode);
+
+        listView.setFloatViewManager(controller);
+        listView.setOnTouchListener(controller);
+        listView.setDragEnabled(true);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent i = new Intent(view.getContext(), DetailsActivity.class);
+                Log.d("Info", "idEnviadoToDo" +  String.valueOf(id));
+                i.putExtra("idTodo", id);
+                startActivity(i);
+            }
+        });
+
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                final View vista = view;
+                Context context = view.getContext();
+                final int which = position;
+                final long ToDoId = id;
+                final CharSequence[] items = {getResources().getString(R.string.action_edit_item), getResources().getString(R.string.action_delete_item)};
+
+                new AlertDialog.Builder(context).setTitle("Listas...")
+                        .setItems(items, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int item) {
+                                if (item == 0)
+                                    inputToDo(ToDo.load(ToDo.class,ToDoId),vista);
+                                else if (item == 1)
+                                    borrarLista(which);
+                                dialog.dismiss();
+                            }
+                        }).show();
+                return true;
+            }
+        });
     }
 
+    private void borrarLista(long position) {
+        Cursor c = (Cursor)listView.getItemAtPosition((int)(position));
+        int _id = c.getInt(0);
+        if (listaABorrar != null)
+            listaABorrar.save();
+        listaABorrar = ToDo.load(ToDo.class,_id);
+        listaABorrar.status=false;
+        Log.d("Info", "Se borro el item..." + String.valueOf(position) + " :id " + String.valueOf(_id));
+        Snackbar.make(listView.getRootView(), "Se borró la lista y todas sus actividades... Puedo deshacerlo!", Snackbar.LENGTH_LONG)
+                .setCallback(new Snackbar.Callback() {
+                    @Override
+                    public void onDismissed(Snackbar snackbar, int event) {
+                        super.onDismissed(snackbar, event);
+                        if (event != DISMISS_EVENT_ACTION)
+                            listaABorrar.save();
+                        actualizarMainList();
+                    }
+                })
+                .setAction("Deshacer", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        listaABorrar = null;
+                        Toast.makeText(MainActivity.this, "Deshecho...", Toast.LENGTH_LONG).show();
+                    }
+                }).show();
+    }
+
+    private void inputToDo(ToDo lst, View v){
+        boolean modificar = false;
+        if (listaNueva != null) {
+            if (listaNueva.listoGuardar) {
+                Log.d("Info", "Existía una lista con Name: " + listaNueva.name + " position: " + String.valueOf(listaNueva.position));
+                    listaNueva.save();
+                    listaNueva.listoGuardar = false;
+            }
+        }
+        if (lst == null)
+            lst = new ToDo();
+
+        listaNueva = lst;
+        String titulo = getString(R.string.input_todo_title);
+        if (listaNueva.getId() != null && listaNueva.getId()>0) {
+            modificar = true;
+            titulo = String.format(titulo,getString(R.string.Modify));
+            listaNueva.listoGuardar = true;
+        }
+        else
+            titulo = String.format(titulo, getString(R.string.Add));
+        final Context context = v.getContext();
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        final View formElementsView = inflater.inflate(R.layout.todo_input_form, null, false);
+        final EditText todoInputName = (EditText) formElementsView.findViewById(R.id.todo_input_name);
+        if (modificar)
+            todoInputName.setText(listaNueva.name);
+        final View vista = v;
+        new AlertDialog.Builder(context)
+                .setView(formElementsView)
+                .setTitle(titulo)
+                .setPositiveButton(modificar ? R.string.Modify : R.string.Add,
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                listaNueva.name = todoInputName.getText().toString();
+                                if (listaNueva.name.trim().equals("")) {
+                                    Toast.makeText(MainActivity.this, "El nombre de la lista no debe estar en blanco...", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Log.d("Info", "Se va a guardar el item con Name: " + listaNueva.name + " position: " + String.valueOf(listaNueva.position));
+                                    Snackbar.make(vista, "Nueva lista creada... Puedo deshacerlo...", Snackbar.LENGTH_LONG)
+                                            .setCallback(new Snackbar.Callback() {
+                                                @Override
+                                                public void onDismissed(Snackbar snackbar, int event) {
+                                                    super.onDismissed(snackbar, event);
+                                                    if (event != DISMISS_EVENT_ACTION) {
+                                                        if (listaNueva != null) {
+                                                            if (listaNueva.listoGuardar && listaNueva.name != null && !listaNueva.name.trim().equals("")) {
+                                                                listaNueva.save();
+                                                                Log.d("Info", "Se guardó el item... Name: " + listaNueva.name + " position: " + String.valueOf(listaNueva.position));
+                                                            }
+                                                        }
+                                                        listaNueva.listoGuardar = false;
+                                                    }
+                                                    actualizarMainList();
+                                                }
+                                            })
+                                            .setAction("Deshacer", new View.OnClickListener() {
+                                                @Override
+                                                public void onClick(View v) {
+                                                    listaNueva.listoGuardar = false;
+                                                    Toast.makeText(MainActivity.this, "Deshecho...", Toast.LENGTH_SHORT).show();
+                                                }
+                                            }).show();
+                                    actualizarMainList();
+                                }
+                            }
+                        })
+                .setNegativeButton(R.string.Cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .show();
+    }
+
+    private void actualizarMainList(){
+        Cursor oldCursor = adapter.getCursor();
+        if (oldCursor!=null || !oldCursor.isClosed())
+        {
+            Cursor newCursor = ToDo.fetchResultCursor();
+            adapter.swapCursor(newCursor);
+            oldCursor.close();
+        }
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -62,8 +239,13 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch (id){
+            case R.id.action_add_item:
+                inputToDo(null, this.findViewById(R.id.listview));
+                break;
+            case R.id.action_exit:
+                finish();
+                break;
         }
 
         return super.onOptionsItemSelected(item);

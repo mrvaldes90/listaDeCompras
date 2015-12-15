@@ -1,0 +1,3 @@
+# Lista De Compras
+Aplicacion android sencilla para gestionar una lista de compras...
+

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Lista De Compras</string>
+    <string name="app_name">Mis Listas...</string>
     <string name="action_edit_item">Renombrar</string>
     <string name="action_delete_item">Borrar</string>
     <string name="todo_input_form_nameHint">Identificador</string>

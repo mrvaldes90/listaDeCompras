@@ -27,12 +27,10 @@ public class ToDo extends Model {
     @Column(name = "Position")
     public long position;
 
-    public boolean listoGuardar;
     // Make sure to have a default constructor for every ActiveAndroid model
     public ToDo(){
         super();
         this.status = true;
-        this.listoGuardar = true;
         //this.position = ToDo.count();
     }
 
@@ -48,7 +46,7 @@ public class ToDo extends Model {
         String resultRecords = new Select(tableName + ".*, " + tableName + ".Id as _id").
                 from(ToDo.class)
                 .where("Status=1")
-                .orderBy("Position ASC").toSql();
+                .orderBy("Name ASC").toSql();
         // Execute query on the underlying ActiveAndroid SQLite database
         Cursor resultCursor = Cache.openDatabase().rawQuery(resultRecords, null);
         return resultCursor;

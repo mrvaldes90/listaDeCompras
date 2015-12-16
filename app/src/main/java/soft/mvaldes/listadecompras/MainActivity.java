@@ -120,13 +120,18 @@ public class MainActivity extends AppCompatActivity {
         listaABorrar = ToDo.load(ToDo.class,_id);
         listaABorrar.status=false;
         Log.d("Info", "Se borro el item..." + String.valueOf(position) + " :id " + String.valueOf(_id));
-        Snackbar.make(listView.getRootView(), "Se borró la lista y todas sus actividades... Puedo deshacerlo!", Snackbar.LENGTH_LONG)
+        Snackbar.make(listView, "Se borró la lista y todas sus actividades... Puedo deshacerlo!", Snackbar.LENGTH_LONG)
                 .setCallback(new Snackbar.Callback() {
                     @Override
                     public void onDismissed(Snackbar snackbar, int event) {
                         super.onDismissed(snackbar, event);
-                        if (event != DISMISS_EVENT_ACTION)
-                            listaABorrar.save();
+                        if (event != DISMISS_EVENT_ACTION) {
+                            if (listaABorrar != null) {
+                                listaABorrar.save();
+                                listaABorrar = null;
+                            }
+                        }
+
                         actualizarMainList();
                     }
                 })
@@ -134,18 +139,17 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         listaABorrar = null;
-                        Toast.makeText(MainActivity.this, "Deshecho...", Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, "Deshecho...", Toast.LENGTH_SHORT).show();
                     }
                 }).show();
     }
 
     private void inputToDo(ToDo lst, View v){
         boolean modificar = false;
-        if (listaNueva != null) {
-            if (listaNueva.listoGuardar) {
+        if (listaNueva != null && listaNueva.name != null) {
+            if (!listaNueva.name.trim().equals("")) {
                 Log.d("Info", "Existía una lista con Name: " + listaNueva.name + " position: " + String.valueOf(listaNueva.position));
-                    listaNueva.save();
-                    listaNueva.listoGuardar = false;
+                listaNueva.save();
             }
         }
         if (lst == null)
@@ -156,7 +160,6 @@ public class MainActivity extends AppCompatActivity {
         if (listaNueva.getId() != null && listaNueva.getId()>0) {
             modificar = true;
             titulo = String.format(titulo,getString(R.string.Modify));
-            listaNueva.listoGuardar = true;
         }
         else
             titulo = String.format(titulo, getString(R.string.Add));
@@ -166,7 +169,6 @@ public class MainActivity extends AppCompatActivity {
         final EditText todoInputName = (EditText) formElementsView.findViewById(R.id.todo_input_name);
         if (modificar)
             todoInputName.setText(listaNueva.name);
-        final View vista = v;
         new AlertDialog.Builder(context)
                 .setView(formElementsView)
                 .setTitle(titulo)
@@ -178,32 +180,10 @@ public class MainActivity extends AppCompatActivity {
                                     Toast.makeText(MainActivity.this, "El nombre de la lista no debe estar en blanco...", Toast.LENGTH_SHORT).show();
                                 } else {
                                     Log.d("Info", "Se va a guardar el item con Name: " + listaNueva.name + " position: " + String.valueOf(listaNueva.position));
-                                    Snackbar.make(vista, "Nueva lista creada... Puedo deshacerlo...", Snackbar.LENGTH_LONG)
-                                            .setCallback(new Snackbar.Callback() {
-                                                @Override
-                                                public void onDismissed(Snackbar snackbar, int event) {
-                                                    super.onDismissed(snackbar, event);
-                                                    if (event != DISMISS_EVENT_ACTION) {
-                                                        if (listaNueva != null) {
-                                                            if (listaNueva.listoGuardar && listaNueva.name != null && !listaNueva.name.trim().equals("")) {
-                                                                listaNueva.save();
-                                                                Log.d("Info", "Se guardó el item... Name: " + listaNueva.name + " position: " + String.valueOf(listaNueva.position));
-                                                            }
-                                                        }
-                                                        listaNueva.listoGuardar = false;
-                                                    }
-                                                    actualizarMainList();
-                                                }
-                                            })
-                                            .setAction("Deshacer", new View.OnClickListener() {
-                                                @Override
-                                                public void onClick(View v) {
-                                                    listaNueva.listoGuardar = false;
-                                                    Toast.makeText(MainActivity.this, "Deshecho...", Toast.LENGTH_SHORT).show();
-                                                }
-                                            }).show();
-                                    actualizarMainList();
+                                    listaNueva.save();
+                                    listaNueva = null;
                                 }
+                                actualizarMainList();
                             }
                         })
                 .setNegativeButton(R.string.Cancel, new DialogInterface.OnClickListener() {

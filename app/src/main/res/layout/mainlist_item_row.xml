@@ -5,12 +5,15 @@
     <ImageView
         android:id="@+id/mainListHandler"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/ic_navigation_drawer"/>
+        android:layout_height="fill_parent"
+        android:src="@drawable/ic_navigation_drawer"
+        android:paddingLeft="15dp"
+        android:paddingRight="2dp" />
     <TextView
         android:id="@+id/mainListName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textSize="30sp"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:textColor="@android:color/black" />
 

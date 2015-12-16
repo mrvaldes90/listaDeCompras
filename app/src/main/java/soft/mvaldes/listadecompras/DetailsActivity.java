@@ -14,10 +14,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.mobeta.android.dslv.DragSortController;
@@ -54,7 +56,7 @@ public class DetailsActivity extends AppCompatActivity {
         getFragmentManager().addOnBackStackChangedListener(new FragmentManager.OnBackStackChangedListener() {
             @Override
             public void onBackStackChanged() {
-                Log.d("info","back");
+                Log.d("info", "back");
             }
         });
         listView = (DragSortListView) findViewById(R.id.listviewDetails);
@@ -107,16 +109,21 @@ public class DetailsActivity extends AppCompatActivity {
                 return true;
             }
         });
+        //Agregar header
 
+        LayoutInflater inflater = getLayoutInflater();
+        ViewGroup header = (ViewGroup)inflater.inflate(R.layout.detaillist_header_row, listView, false);
+        TextView txtHeader = (TextView) header.findViewById(R.id.detailListHeader);
+        txtHeader.setText(padre.name);
+        listView.addHeaderView(header, null, false);
     }
 
     private void inputItem(Item itm, View v) {
         boolean modificar = false;
         if (item != null) {
-            if (item.listoGuardar) {
+            if (!item.name.trim().equals("")) {
                 Log.d("Info", "Existía una lista con Name: " + item.name + " position: " + String.valueOf(item.position));
                 item.save();
-                item.listoGuardar = false;
             }
         }
         if (itm == null)
@@ -126,7 +133,6 @@ public class DetailsActivity extends AppCompatActivity {
         String titulo = getString(R.string.input_item_title);
         if (item.getId() != null && item.getId()>0) {
             modificar = true;
-            item.listoGuardar = true;
             titulo = String.format(titulo,getString(R.string.Modify));
         }
         else
@@ -150,30 +156,11 @@ public class DetailsActivity extends AppCompatActivity {
                                     Toast.makeText(DetailsActivity.this, "El nombre de la tarea no debe estar en blanco...", Toast.LENGTH_SHORT).show();
                                 } else {
                                     Log.d("Info", "Se va a guardar el item con Name: " + item.name + " position: " + String.valueOf(item.position));
-                                    Snackbar.make(vista, "Nueva tarea creada... Puedo deshacerlo...", Snackbar.LENGTH_LONG)
-                                            .setCallback(new Snackbar.Callback() {
-                                                @Override
-                                                public void onDismissed(Snackbar snackbar, int event) {
-                                                    super.onDismissed(snackbar, event);
-                                                    if (event != DISMISS_EVENT_ACTION) {
-                                                        if (item.listoGuardar && item.name != null && !item.name.trim().equals("")) {
-                                                            item.save();
-                                                            Log.d("Info", "Se guardó el item... Name: " + item.name + " position: " + String.valueOf(item.position));
-                                                            item.listoGuardar = false;
-                                                        }
-                                                    }
-                                                    actualizarDetailList();
-                                                }
-                                            })
-                                            .setAction("Deshacer", new View.OnClickListener() {
-                                                @Override
-                                                public void onClick(View v) {
-                                                    item.listoGuardar = false;
-                                                    Toast.makeText(DetailsActivity.this, "Deshecho...", Toast.LENGTH_SHORT).show();
-                                                }
-                                            }).show();
-                                    actualizarDetailList();
+                                    item.save();
+                                    Log.d("Info", "Se guardó el item... Name: " + item.name + " position: " + String.valueOf(item.position));
+                                    item = null;
                                 }
+                                actualizarDetailList();
                             }
                         })
                 .setNegativeButton(R.string.Cancel, new DialogInterface.OnClickListener() {
@@ -203,13 +190,17 @@ public class DetailsActivity extends AppCompatActivity {
         itemBorrar = Item.load(Item.class,_id);
         itemBorrar.status=false;
         Log.d("Info", "Se borro el item..." + String.valueOf(which) + " :id " + String.valueOf(_id));
-        Snackbar.make(listView.getRootView(),"Se borró la tarea... Puedo deshacerlo!",Snackbar.LENGTH_LONG)
+        Snackbar.make(listView,"Se borró la tarea... Puedo deshacerlo!",Snackbar.LENGTH_LONG)
                 .setCallback(new Snackbar.Callback() {
                     @Override
                     public void onDismissed(Snackbar snackbar, int event) {
                         super.onDismissed(snackbar, event);
-                        if (event != DISMISS_EVENT_ACTION)
-                            itemBorrar.save();
+                        if (event != DISMISS_EVENT_ACTION) {
+                            if (itemBorrar != null) {
+                                itemBorrar.save();
+                                itemBorrar = null;
+                            }
+                        }
                         actualizarDetailList();
                     }
                 })
@@ -217,7 +208,7 @@ public class DetailsActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         itemBorrar = null;
-                        Toast.makeText(DetailsActivity.this, "Deshecho...", Toast.LENGTH_LONG).show();
+                        Toast.makeText(DetailsActivity.this, "Deshecho...", Toast.LENGTH_SHORT).show();
                     }
                 }).show();
     }

@@ -39,7 +39,6 @@ public class Item extends Model {
     @Column(name = "ToDo", onUpdate = Column.ForeignKeyAction.CASCADE, onDelete = Column.ForeignKeyAction.CASCADE)
     public ToDo todo;
 
-    public boolean listoGuardar;
 
     // Make sure to have a default constructor for every ActiveAndroid model
     public Item(){
@@ -54,7 +53,6 @@ public class Item extends Model {
             this.addedOn = new Date();
         }
         this.status = true;
-        this.listoGuardar = true;
         //this.position = Item.count();
     }
 
@@ -64,7 +62,7 @@ public class Item extends Model {
         this.done = done;
         this.addedOn = addedOn;
         this.todo = todo;
-        this.position = this.count();
+        //this.position = Item.count();
     }
     // Return cursor for result set for all items
     public static Cursor fetchResultCursor() {
@@ -86,7 +84,7 @@ public class Item extends Model {
         String resultRecords = new Select(tableName + ".*, " + tableName + ".Id as _id").
                 from(Item.class)
                 .where("Status=1 and ToDo=" + String.valueOf(todoId))
-                .orderBy("Position ASC").toSql();
+                .orderBy("Name ASC").toSql();
         // Execute query on the underlying ActiveAndroid SQLite database
         Cursor resultCursor = Cache.openDatabase().rawQuery(resultRecords, null);
         return resultCursor;

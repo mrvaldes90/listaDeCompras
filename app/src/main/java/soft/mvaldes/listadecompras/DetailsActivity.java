@@ -183,6 +183,7 @@ public class DetailsActivity extends AppCompatActivity {
     }
 
     private void borrarItem(int which) {
+        which++;
         Cursor c = (Cursor)listView.getItemAtPosition((int)(which));
         int _id = c.getInt(0);
         if (itemBorrar != null)

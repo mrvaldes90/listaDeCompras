@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     SimpleDragSortCursorAdapter adapter;
     ToDo listaNueva; //lista a crear...
     ToDo listaABorrar; //lista a borrar...
+    public static boolean verOcultos = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -222,6 +223,14 @@ public class MainActivity extends AppCompatActivity {
         switch (id){
             case R.id.action_add_item:
                 inputToDo(null, this.findViewById(R.id.listview));
+                break;
+            case R.id.action_hidden_items:
+                verOcultos = !verOcultos;
+                if (verOcultos)
+                    item.setTitle("Ocultar borrados");
+                else
+                    item.setTitle("Mostrar borrados");
+                actualizarMainList();
                 break;
             case R.id.action_exit:
                 finish();

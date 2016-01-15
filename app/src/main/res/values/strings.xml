@@ -10,4 +10,5 @@
     <string name="Exit">Salir</string>
     <string name="input_todo_title">%1$s lista</string>
     <string name="input_item_title">%1$s tarea</string>
+    <string name="Hidden">Mostrar borrados...</string>
 </resources>

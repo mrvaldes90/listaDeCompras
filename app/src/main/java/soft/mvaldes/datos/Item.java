@@ -13,6 +13,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import soft.mvaldes.listadecompras.MainActivity;
+
 /**
  * Created by mvaldez on 02/12/2015.
  */
@@ -68,10 +70,14 @@ public class Item extends Model {
     public static Cursor fetchResultCursor() {
         String tableName = Cache.getTableInfo(Item.class).getTableName();
         // Query all items without any conditions
-        String resultRecords = new Select(tableName + ".*, " + tableName + ".Id as _id").
+        String resultRecords ="";
+        if (MainActivity.verOcultos)
+            resultRecords = new Select(tableName + ".*, " + tableName + ".Id as _id").
+                    from(Item.class).toSql();
+        else
+            resultRecords = new Select(tableName + ".*, " + tableName + ".Id as _id").
                 from(Item.class)
-                .where("Status=1")
-                .orderBy("Position ASC").toSql();
+                .where("Status=1").toSql();
         // Execute query on the underlying ActiveAndroid SQLite database
         Cursor resultCursor = Cache.openDatabase().rawQuery(resultRecords, null);
         return resultCursor;
@@ -81,10 +87,15 @@ public class Item extends Model {
     public static Cursor fetchResultCursor(long todoId) {
         String tableName = Cache.getTableInfo(Item.class).getTableName();
         // Query all items without any conditions
-        String resultRecords = new Select(tableName + ".*, " + tableName + ".Id as _id").
+        String resultRecords ="";
+        if (MainActivity.verOcultos)
+            resultRecords = new Select(tableName + ".*, " + tableName + ".Id as _id").
+                    from(Item.class)
+                    .where("ToDo=" + String.valueOf(todoId)).toSql();
+        else
+            resultRecords = new Select(tableName + ".*, " + tableName + ".Id as _id").
                 from(Item.class)
-                .where("Status=1 and ToDo=" + String.valueOf(todoId))
-                .orderBy("Name ASC").toSql();
+                .where("Status=1 and ToDo=" + String.valueOf(todoId)).toSql();
         // Execute query on the underlying ActiveAndroid SQLite database
         Cursor resultCursor = Cache.openDatabase().rawQuery(resultRecords, null);
         return resultCursor;

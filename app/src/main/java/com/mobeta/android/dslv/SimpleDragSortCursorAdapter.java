@@ -18,6 +18,7 @@ package com.mobeta.android.dslv;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -176,6 +177,11 @@ public class SimpleDragSortCursorAdapter extends ResourceDragSortCursorAdapter {
                         SimpleDateFormat sdf = new SimpleDateFormat(format);
                         text = sdf.format(cal.getTime());
                     }
+                    else if (mOriginalFrom[i]=="Done") {
+                        long id = cursor.getLong(cursor.getColumnIndex("Id"));
+                        Item itemLoaded = Item.load(Item.class, id);
+                        text = String.valueOf(itemLoaded.done);
+                    }
                     else {
                         text = cursor.getString(from[i]);
                     }
@@ -190,7 +196,7 @@ public class SimpleDragSortCursorAdapter extends ResourceDragSortCursorAdapter {
                             @Override
                             public void onClick(View v) {
                                 CheckBox cBox = (CheckBox) v;
-                                long fb_id = (long)v.getTag();
+                                long fb_id = (long) v.getTag();
                                 Item itemToModify = Item.load(Item.class, fb_id);
                                 itemToModify.done = cBox.isChecked();
                                 itemToModify.save();
@@ -201,6 +207,14 @@ public class SimpleDragSortCursorAdapter extends ResourceDragSortCursorAdapter {
                     } else if (v instanceof ImageView) {
                         setViewImage((ImageView) v, text);
                     } else if (v instanceof TextView) {
+                        int status = 1;
+                        int index = cursor.getColumnIndex("Status");
+                        if (!cursor.isNull(index))
+                            status = cursor.getInt(index);
+                        if (status == 0) {
+                            ((TextView) v).setTextColor(Color.RED);
+                            Log.d("Info","Color ROJO");
+                        }
                         setViewText((TextView) v, text);
                     } else {
                         throw new IllegalStateException(v.getClass().getName() + " is not a " +
@@ -210,6 +224,8 @@ public class SimpleDragSortCursorAdapter extends ResourceDragSortCursorAdapter {
             }
         }
     }
+
+
 
     private void setViewCheckBox(CheckBox v, String value) {
         Log.d("Info", "Checkbox value to set: " + value);

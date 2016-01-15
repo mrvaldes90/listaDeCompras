@@ -10,6 +10,8 @@ import com.activeandroid.query.Select;
 
 import java.util.List;
 
+import soft.mvaldes.listadecompras.MainActivity;
+
 /**
  * Created by mvaldez on 02/12/2015.
  */
@@ -43,10 +45,14 @@ public class ToDo extends Model {
     public static Cursor fetchResultCursor() {
         String tableName = Cache.getTableInfo(ToDo.class).getTableName();
         // Query all items without any conditions
-        String resultRecords = new Select(tableName + ".*, " + tableName + ".Id as _id").
+        String resultRecords ="";
+        if (MainActivity.verOcultos)
+            resultRecords = new Select(tableName + ".*, " + tableName + ".Id as _id").
+                    from(ToDo.class).toSql();
+        else
+            resultRecords = new Select(tableName + ".*, " + tableName + ".Id as _id").
                 from(ToDo.class)
-                .where("Status=1")
-                .orderBy("Name ASC").toSql();
+                .where("Status=1").toSql();
         // Execute query on the underlying ActiveAndroid SQLite database
         Cursor resultCursor = Cache.openDatabase().rawQuery(resultRecords, null);
         return resultCursor;
